@@ -31,7 +31,7 @@ func main() {
 
 	ctab := crontab.New() // create cron table
 
-    // MustAddJob - will panic on wrong syntax or problems with function/arguments
+	// MustAddJob - will panic on wrong syntax or problems with function/arguments
 	ctab.MustAddJob(atmysqldumpJob, doBackup, mysqlDatabase, mysqlUsername, 
 		mysqlPassword, mysqlBackupDirectory, mysqlBackupDestinationHost, mysqlBackupDestinationDirectory) 
 
@@ -54,7 +54,7 @@ func getEnvironmentVariable(key string, required bool) (string) {
 
 func doBackup(mysqlDatabase string, mysqlUsername string, mysqlPassword string, 
 	mysqlBackupDirectory string, mysqlBackupDestinationHost string, 
-	mysqlBackupDestinationDirectory string) (string) {
+	mysqlBackupDestinationDirectory string) {
 
 		log.Println("beginning backup for " + mysqlDatabase + " to " + mysqlBackupDirectory)
 		cmd := exec.Command("mysqldump", mysqlDatabase, "-u", mysqlUsername, "-p" + mysqlPassword)
@@ -72,6 +72,17 @@ func doBackup(mysqlDatabase string, mysqlUsername string, mysqlPassword string,
 		
 		cmd.Run()
 		log.Println("backup complete")
-		return outputFileName
+		if len(mysqlBackupDestinationHost) > 0 && len(mysqlBackupDestinationDirectory) > 0 {
+			transferBackup(outputFileName, mysqlBackupDestinationHost, mysqlBackupDestinationDirectory)
+		}
 
+}
+
+func transferBackup(backupFile string, mysqlBackupDestinationHost string, 
+	mysqlBackupDestinationDirectory string) {
+
+	log.Println("copying " + backupFile + " to " + mysqlBackupDestinationHost)
+	cmd := exec.Command("scp", backupFile, mysqlBackupDestinationHost + mysqlBackupDestinationDirectory)
+	
+	cmd.Run()
 }
