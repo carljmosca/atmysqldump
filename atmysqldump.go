@@ -69,7 +69,7 @@ func doBackup(mysqlDatabase string, mysqlUsername string, mysqlPassword string,
 
 		current := time.Now()
 		outputFileName := mysqlBackupDirectory + "/" + mysqlDatabase + "_" + 
-			current.Format("20180131-234900") + ".dump"
+			current.Format("20060102-150405") + ".dump"
 
 		outfile, err := os.Create(outputFileName)
     	if err != nil {
