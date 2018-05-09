@@ -67,7 +67,11 @@ func doBackup(mysqlDatabase string, mysqlUsername string, mysqlPassword string,
 		log.Println("beginning backup for " + mysqlDatabase + " to " + mysqlBackupDirectory)
 		cmd := exec.Command("mysqldump", mysqlDatabase, "-u", mysqlUsername, "-p" + mysqlPassword)
 
-		outfile, err := os.Create(mysqlBackupDirectory + "/" + mysqlDatabase + ".dump")
+		current := time.Now()
+		outputFileName := mysqlBackupDirectory + "/" + mysqlDatabase + "_" + 
+			current.Format("20180131-234900") + ".dump"
+
+		outfile, err := os.Create(outputFileName)
     	if err != nil {
         	panic(err)
     	}	
