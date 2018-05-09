@@ -34,18 +34,10 @@ func main() {
     // MustAddJob - will panic on wrong syntax or problems with function/arguments
 	ctab.MustAddJob(atmysqldumpJob, doBackup, mysqlDatabase, mysqlUsername, 
 		mysqlPassword, mysqlBackupDirectory, mysqlBackupDestinationHost, mysqlBackupDestinationDirectory) 
-  
-    // MustAddJob is like AddJob but panics on wrong syntax or problems with func/args
-    // This aproach is similar to regexp.Compile and regexp.MustCompile from go's standard library,  used for easier initialization on startup
-    //ctab.MustAddJob("* * * * *", myFunc) // every minute
-    //ctab.MustAddJob("0 12 * * *", myFunc3) // noon lauch
 
-    // fn with args
-    //ctab.MustAddJob("0 0 * * 1,2", myFunc2, "Monday and Tuesday midnight", 123) 
-    //ctab.MustAddJob("*/5 * * * *", myFunc2, "every five min", 0)
+	for (true) {
 
-    // all your other app code as usual, or put sleep timer for demo
-    time.Sleep(10 * time.Minute)
+	}
 }
 
 func getEnvironmentVariable(key string, required bool) (string) {
@@ -62,7 +54,7 @@ func getEnvironmentVariable(key string, required bool) (string) {
 
 func doBackup(mysqlDatabase string, mysqlUsername string, mysqlPassword string, 
 	mysqlBackupDirectory string, mysqlBackupDestinationHost string, 
-	mysqlBackupDestinationDirectory string) {
+	mysqlBackupDestinationDirectory string) (string) {
 
 		log.Println("beginning backup for " + mysqlDatabase + " to " + mysqlBackupDirectory)
 		cmd := exec.Command("mysqldump", mysqlDatabase, "-u", mysqlUsername, "-p" + mysqlPassword)
@@ -80,5 +72,6 @@ func doBackup(mysqlDatabase string, mysqlUsername string, mysqlPassword string,
 		
 		cmd.Run()
 		log.Println("backup complete")
+		return outputFileName
 
 }
