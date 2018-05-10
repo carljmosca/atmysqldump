@@ -17,6 +17,7 @@ func main() {
 	const ENV_MYSQL_BACKUP_DIRECTORY = "MYSQL_BACKUP_DIRECTORY"
 	const ENV_MYSQL_BACKUP_DESTINATION_HOST = "MYSQL_BACKUP_DESTINATION_HOST"
 	const ENV_MYSQL_BACKUP_DESTINATION_DIRECTORY = "MYSQL_BACKUP_DESTINATION_DIRECTORY"
+	const ENV_MYSQL_BACKUP_DESTINATION_USERNAME = "MYSQL_BACKUP_DESTINATION_USERNAME"
 
 	// get required environment variables	
 	atmysqldumpJob := getEnvironmentVariable(ENV_ATMYSQLDUMP_JOB, true)
@@ -28,12 +29,14 @@ func main() {
 	// get optional environment variables
 	mysqlBackupDestinationHost := getEnvironmentVariable(ENV_MYSQL_BACKUP_DESTINATION_HOST, false)
 	mysqlBackupDestinationDirectory := getEnvironmentVariable(ENV_MYSQL_BACKUP_DESTINATION_DIRECTORY, false)
+	mysqlBackupDestinationUsername := getEnvironmentVariable(ENV_MYSQL_BACKUP_DESTINATION_USERNAME, false)
 
 	ctab := crontab.New() // create cron table
 
 	// MustAddJob - will panic on wrong syntax or problems with function/arguments
 	ctab.MustAddJob(atmysqldumpJob, doBackup, mysqlDatabase, mysqlUsername, 
-		mysqlPassword, mysqlBackupDirectory, mysqlBackupDestinationHost, mysqlBackupDestinationDirectory) 
+		mysqlPassword, mysqlBackupDirectory, mysqlBackupDestinationHost, mysqlBackupDestinationDirectory,
+		mysqlBackupDestinationUsername) 
 
 	for (true) {
 
@@ -54,7 +57,7 @@ func getEnvironmentVariable(key string, required bool) (string) {
 
 func doBackup(mysqlDatabase string, mysqlUsername string, mysqlPassword string, 
 	mysqlBackupDirectory string, mysqlBackupDestinationHost string, 
-	mysqlBackupDestinationDirectory string) {
+	mysqlBackupDestinationDirectory string, mysqlBackupDestinationUsername string ) {
 
 		log.Println("beginning backup for " + mysqlDatabase + " to " + mysqlBackupDirectory)
 		cmd := exec.Command("mysqldump", mysqlDatabase, "-u", mysqlUsername, "-p" + mysqlPassword)
@@ -72,17 +75,30 @@ func doBackup(mysqlDatabase string, mysqlUsername string, mysqlPassword string,
 		
 		cmd.Run()
 		log.Println("backup complete")
+
 		if len(mysqlBackupDestinationHost) > 0 && len(mysqlBackupDestinationDirectory) > 0 {
-			transferBackup(outputFileName, mysqlBackupDestinationHost, mysqlBackupDestinationDirectory)
+			transferBackup(outputFileName, mysqlBackupDestinationHost, mysqlBackupDestinationDirectory,
+				mysqlBackupDestinationUsername)
 		}
 
 }
 
 func transferBackup(backupFile string, mysqlBackupDestinationHost string, 
-	mysqlBackupDestinationDirectory string) {
+	mysqlBackupDestinationDirectory string, mysqlBackupDestinationUsername string) {
 
-	log.Println("copying " + backupFile + " to " + mysqlBackupDestinationHost)
-	cmd := exec.Command("scp", backupFile, mysqlBackupDestinationHost + mysqlBackupDestinationDirectory)
+	destination := ""
+	if len(mysqlBackupDestinationUsername) > 0 {
+		destination += mysqlBackupDestinationUsername + "@"
+	}
+	destination += mysqlBackupDestinationHost + ":" + mysqlBackupDestinationDirectory
+
+	log.Println("copying " + backupFile + " to " + destination)
+	cmd := exec.Command("scp", backupFile, destination)
+
+	err := cmd.Run()
+
+	if err != nil {
+		log.Fatal(err)
+	}	
 	
-	cmd.Run()
 }
